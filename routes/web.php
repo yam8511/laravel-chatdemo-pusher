@@ -10,7 +10,6 @@
 | contains the "web" middleware group. Now create something great!
 |
 */
-
 Route::get('/', function () {
     return view('welcome');
 });
@@ -27,13 +26,14 @@ Route::get('/messages', function () {
 
 Route::post('/messages', function () {
 	
-	if (request()->has('message')) {
-		$user = Auth::user();
+    $user = Auth::user();
 
-		$user->messages()->create([
-			'message' => request()->get('message')
-		]);
-	}
+    $message = $user->messages()->create([
+        'message' => request()->get('message')
+    ]);
+
+	# Announce that a new message has been posted
+    broadcast(new \App\Events\MessagePosted($message, $user))->toOthers();
 
 	return response()->json([
 		'result' => 'ok',

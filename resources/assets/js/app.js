@@ -21,7 +21,8 @@ Vue.component('chat-composer', require('./components/ChatComposer.vue'));
 const app = new Vue({
     el: '#app',
     data: {
-    	messages: []
+    	messages: [],
+        usersInRoom: []
     },
     methods: {
         addMessage (message) {
@@ -36,14 +37,42 @@ const app = new Vue({
             this.messages.reverse();
 
             axios.post('/messages', message).then(response => {
-                console.info(response);
+                // console.info(response);
             });
         }
     },
-    mounted() {
+    created() {
         axios.get('/messages').then(response => {
             this.messages = response.data;
-            console.info(response);
+            // console.info(response);
         });
+
+        // Echo.private('chatroom')
+        //     .listen('EventName', (e) => {
+        //
+        //     });
+
+        Echo.join('chatroom')
+            .here((users) => {
+                console.log(users);
+                this.usersInRoom = users;
+            })
+            .joining((user) => {
+                console.log(user);
+                this.usersInRoom.push(user);
+            })
+            .leaving((user) => {
+                console.log(user);
+                this.usersInRoom = this.usersInRoom.filter(u => u != user)
+            })
+            .listen('MessagePosted', (e) => {
+                console.info(e);
+                this.messages.reverse();
+                this.messages.push({
+                    message: e.message.message,
+                    user: e.user
+                });
+                this.messages.reverse();
+            })
     }
 });
